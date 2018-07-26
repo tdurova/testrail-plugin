@@ -1,20 +1,20 @@
-/**
- *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
  */
 package org.jenkinsci.plugins.testrail;
 
@@ -72,28 +72,83 @@ public class TestRailNotifier extends Notifier {
         this.testRun = testRun;
     }
 
-    public void setTestrailProject(int project) { this.testrailProject = project;}
-    public int getTestrailProject() { return this.testrailProject; }
-    public void setTestrailSuite(int suite) { this.testrailSuite = suite; }
-    public int getTestrailSuite() { return this.testrailSuite; }
-    public void setJunitResultsGlob(String glob) { this.junitResultsGlob = glob; }
-    public String getJunitResultsGlob() { return this.junitResultsGlob; }
-    public String getTestrailMilestone() { return this.testrailMilestone; }
-    public void setTestrailMilestone(String milestone) { this.testrailMilestone = milestone; }
-    public void setEnableMilestone(boolean mstone) {this.enableMilestone = mstone; }
-    public boolean getEnableMilestone() { return  this.enableMilestone; }
-    public void setExtraParams(String params) { this.extraParameters = params; }
-    public String getExtraParams() { return this.extraParameters; }
-    public void setUseExistingRun(boolean newrun) { this.useExistingRun = newrun; }
-    public boolean getUseExistingRun() { return this.useExistingRun; }
-    public void setTestRun(String runId) { this.testRun = runId; }
-    public String getTestRun() { return this.testRun; }
-    public void setCreateNewTestCases(boolean newcases) {this.createNewTestCases = newcases; }
-    public boolean getCreateNewTestCases() { return  this.createNewTestCases; }
+    public void setTestrailProject(int project) {
+        this.testrailProject = project;
+    }
+
+    public int getTestrailProject() {
+        return this.testrailProject;
+    }
+
+    public void setTestrailSuite(int suite) {
+        this.testrailSuite = suite;
+    }
+
+    public int getTestrailSuite() {
+        return this.testrailSuite;
+    }
+
+    public void setJunitResultsGlob(String glob) {
+        this.junitResultsGlob = glob;
+    }
+
+    public String getJunitResultsGlob() {
+        return this.junitResultsGlob;
+    }
+
+    public String getTestrailMilestone() {
+        return this.testrailMilestone;
+    }
+
+    public void setTestrailMilestone(String milestone) {
+        this.testrailMilestone = milestone;
+    }
+
+    public void setEnableMilestone(boolean enableMilestone) {
+        this.enableMilestone = enableMilestone;
+    }
+
+    public boolean getEnableMilestone() {
+        return this.enableMilestone;
+    }
+
+    public void setExtraParams(String params) {
+        this.extraParameters = params;
+    }
+
+    public String getExtraParams() {
+        return this.extraParameters;
+    }
+
+    public void setUseExistingRun(boolean newrun) {
+        this.useExistingRun = newrun;
+    }
+
+    public boolean getUseExistingRun() {
+        return this.useExistingRun;
+    }
+
+    public void setTestRun(String runId) {
+        this.testRun = runId;
+    }
+
+    public String getTestRun() {
+        return this.testRun;
+    }
+
+    public void setCreateNewTestCases(boolean createNewTestCases) {
+        this.createNewTestCases = createNewTestCases;
+    }
+
+    public boolean getCreateNewTestCases() {
+        return this.createNewTestCases;
+    }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-        TestRailClient  testrail = getDescriptor().getTestrailInstance();
+    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
+            throws IOException, InterruptedException
+    {
+        TestRailClient testrail = getDescriptor().getTestrailInstance();
         testrail.setHost(getDescriptor().getTestrailHost());
         testrail.setUser(getDescriptor().getTestrailUser());
         testrail.setPassword(getDescriptor().getTestrailPassword());
@@ -102,7 +157,8 @@ public class TestRailNotifier extends Notifier {
         try {
             testCases = new ExistingTestCases(testrail, this.testrailProject, this.testrailSuite);
         } catch (ElementNotFoundException e) {
-            listener.getLogger().println("Cannot find project or suite on TestRail server. Please check your Jenkins job and system configurations.");
+            listener.getLogger().println("Cannot find project or suite on TestRail server. " +
+                    "Please check your Jenkins job and system configurations.");
             return false;
         }
 
@@ -121,7 +177,7 @@ public class TestRailNotifier extends Notifier {
         listener.getLogger().println("Munging test result files.");
         Results results = new Results();
 
-        // FilePath doesn't have a read method. We want to actually process the files on the master
+        // FilePath doesn't have a read method. We want actually process the files on the master
         // because during processing we talk to TestRail and slaves might not be able to.
         // So we'll copy the result files to the master and munge them there:
         //
@@ -129,26 +185,26 @@ public class TestRailNotifier extends Notifier {
         // Do a base.copyRecursiveTo() with file masks into the temp dir.
         // process the temp files.
         // it looks like the destructor deletes the temp dir when we're finished
-        FilePath tempdir = new FilePath(Util.createTempDir());
-        // This picks up *all* result files so if you have old results in the same directory we'll see those, too.
+        FilePath tempDir = new FilePath(Util.createTempDir());
+        // This picks up *all* result files, so if you have old results in the same directory, we'll see those, too.
         FilePath ws = build.getWorkspace();
         try {
             assert ws != null;
-            ws.copyRecursiveTo(junitResultsGlob, "", tempdir);
+            ws.copyRecursiveTo(junitResultsGlob, "", tempDir);
         } catch (Exception e) {
             listener.getLogger().println("Error trying to copy files to Jenkins master: " + e.getMessage());
             return false;
         }
         JUnitResults actualJunitResults = null;
         try {
-            actualJunitResults = new JUnitResults(tempdir, this.junitResultsGlob, listener.getLogger());
+            actualJunitResults = new JUnitResults(tempDir, this.junitResultsGlob, listener.getLogger());
         } catch (JAXBException e) {
             listener.getLogger().println(e.getMessage());
             return false;
         }
         List<Testsuite> suites = actualJunitResults.getSuites();
         try {
-            for (Testsuite suite: suites) {
+            for (Testsuite suite : suites) {
                 results.merge(addSuite(suite, null, testCases));
             }
         } catch (Exception e) {
@@ -157,7 +213,7 @@ public class TestRailNotifier extends Notifier {
         }
 
         listener.getLogger().println("Uploading results to TestRail.");
-        String runComment = "Automated results from Jenkins: " + build.getUrl().toString();
+        String runComment = "Automated results from Jenkins: " + build.getUrl();
 
         int runId = Integer.parseInt(testRun);
         TestRailResponse response;
@@ -192,7 +248,9 @@ public class TestRailNotifier extends Notifier {
         return buildResult;
     }
 
-    private Results addSuite(Testsuite suite, String parentId, ExistingTestCases existingCases) throws IOException, TestRailException {
+    private Results addSuite(Testsuite suite, String parentId, ExistingTestCases existingCases)
+            throws IOException, TestRailException
+    {
         //figure out TR sectionID
         int sectionId;
         try {
@@ -247,7 +305,7 @@ public class TestRailNotifier extends Notifier {
                         caseStatus = CaseStatus.PASSED;
                     }
 
-                    if (caseStatus != CaseStatus.UNTESTED){
+                    if (caseStatus != CaseStatus.UNTESTED) {
                         results.addResult(new Result(caseId, caseStatus, caseComment, caseTime));
                     }
                 }
@@ -262,7 +320,7 @@ public class TestRailNotifier extends Notifier {
     // you don't have to do this.
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -321,8 +379,7 @@ public class TestRailNotifier extends Notifier {
             return items;
         }
 
-        public FormValidation doCheckTestrailSuite(@QueryParameter String value)
-                throws IOException, ServletException {
+        public FormValidation doCheckTestrailSuite(@QueryParameter String value) throws IOException, ServletException {
             return getFormValidation();
         }
 
@@ -331,7 +388,8 @@ public class TestRailNotifier extends Notifier {
             testrail.setUser(getTestrailUser());
             testrail.setPassword(getTestrailPassword());
 
-            if (getTestrailHost().isEmpty() || getTestrailUser().isEmpty() || getTestrailPassword().isEmpty() || !testrail.serverReachable() || !testrail.authenticationWorks()) {
+            if (getTestrailHost().isEmpty() || getTestrailUser().isEmpty() || getTestrailPassword().isEmpty()
+                    || !testrail.serverReachable() || !testrail.authenticationWorks()) {
                 return FormValidation.warning("Please fix your TestRail configuration in Manage Jenkins -> Configure System.");
             }
 
@@ -378,7 +436,7 @@ public class TestRailNotifier extends Notifier {
                 testrail.setUser(value);
                 testrail.setPassword(testrailPassword);
                 testrail.setUser(testrailUser);
-                if (testrail.serverReachable() && !testrail.authenticationWorks()){
+                if (testrail.serverReachable() && !testrail.authenticationWorks()) {
                     return FormValidation.error("Invalid user/password combination.");
                 }
             }
@@ -401,8 +459,8 @@ public class TestRailNotifier extends Notifier {
 
             items.add("None", "");
             try {
-                for (Milestone mstone : testrail.getMilestones(testrailProject)) {
-                    items.add(mstone.getName(), mstone.getId());
+                for (Milestone milestone : testrail.getMilestones(testrailProject)) {
+                    items.add(milestone.getName(), milestone.getId());
                 }
             } catch (ElementNotFoundException | IOException ignored) {
             }
@@ -448,16 +506,39 @@ public class TestRailNotifier extends Notifier {
             // ^Can also use req.bindJSON(this, formData);
             //  (easier when there are many fields; need set* methods for this, like setTestrailHost)
             save();
-            return super.configure(req,formData);
+            return super.configure(req, formData);
         }
 
-        public void setTestrailHost(String host) { this.testrailHost = host; }
-        String getTestrailHost() { return testrailHost; }
-        public void setTestrailUser(String user) { this.testrailUser = user; }
-        String getTestrailUser() { return testrailUser; }
-        public void setTestrailPassword(String password) { this.testrailPassword = password; }
-        String getTestrailPassword() { return testrailPassword; }
-        public void setTestrailInstance(TestRailClient trc) { testrail = trc; }
-        TestRailClient getTestrailInstance() { return testrail; }
+        public void setTestrailHost(String host) {
+            this.testrailHost = host;
+        }
+
+        String getTestrailHost() {
+            return testrailHost;
+        }
+
+        public void setTestrailUser(String user) {
+            this.testrailUser = user;
+        }
+
+        String getTestrailUser() {
+            return testrailUser;
+        }
+
+        public void setTestrailPassword(String password) {
+            this.testrailPassword = password;
+        }
+
+        String getTestrailPassword() {
+            return testrailPassword;
+        }
+
+        public void setTestrailInstance(TestRailClient trc) {
+            testrail = trc;
+        }
+
+        TestRailClient getTestrailInstance() {
+            return testrail;
+        }
     }
 }
