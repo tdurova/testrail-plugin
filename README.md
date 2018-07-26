@@ -28,7 +28,7 @@ To use this plugin in a pipeline, add the following to your Jenkinsfile:
 
 ```
 testRail(testrailProject: <Project ID>, testrailSuite: <Suite ID>, 
-         junitResultsGlob: '<Junit results>', createNewTestcases:<true | false>])
+         junitResultsGlob: '<Junit results>', createNewTestCases:<true | false>])
 ```
 
 Developers

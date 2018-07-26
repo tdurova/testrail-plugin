@@ -13,7 +13,7 @@
   <f:entry title="Test Report XMLs" field="junitResultsGlob">
     <f:textbox />
   </f:entry>
-  <f:entry title="Create new testcases" field="createNewTestcases">
+  <f:entry title="Create new testCases" field="createNewTestCases">
     <f:checkbox/>
   </f:entry>
 
