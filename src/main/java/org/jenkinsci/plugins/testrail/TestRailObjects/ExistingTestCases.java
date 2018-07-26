@@ -43,8 +43,8 @@ public class ExistingTestCases {
         this.projectId = projectId;
         this.testRailClient = testRailClient;
         this.suiteId = suite;
-        this.cases = new ArrayList<Case>(Arrays.asList(testRailClient.getCases(this.projectId, this.suiteId)));
-        this.sections = new ArrayList<Section>(Arrays.asList(testRailClient.getSections(this.projectId, this.suiteId)));
+        this.cases = new ArrayList<>(Arrays.asList(testRailClient.getCases(this.projectId, this.suiteId)));
+        this.sections = new ArrayList<>(Arrays.asList(testRailClient.getSections(this.projectId, this.suiteId)));
     }
 
     public int getProjectId() {
@@ -64,9 +64,7 @@ public class ExistingTestCases {
     }
 
     private String getSectionName(int sectionId) throws ElementNotFoundException {
-        Iterator<Section> iterator = sections.iterator();
-        while (iterator.hasNext()) {
-            Section section = iterator.next();
+        for (Section section : sections) {
             if (section.getId() == sectionId) {
                 return section.getName();
             }
@@ -75,13 +73,9 @@ public class ExistingTestCases {
     }
 
     public int getCaseId(String sectionName, String caseName) throws ElementNotFoundException {
-        Iterator<Case> caseIterator = cases.iterator();
-        while (caseIterator.hasNext()) {
-            Case testcase = caseIterator.next();
+        for (Case testcase : cases) {
             if (testcase.getTitle().equals(caseName)) {
-                Iterator<Section> sectionIterator = sections.iterator();
-                while (sectionIterator.hasNext()) {
-                    Section section = sectionIterator.next();
+                for (Section section : sections) {
                     if (section.getName().equals(sectionName) && (testcase.getSectionId() == section.getId())) {
                         return testcase.getId();
                     }
@@ -92,9 +86,7 @@ public class ExistingTestCases {
     }
 
     public int getSectionId(String sectionName) throws ElementNotFoundException {
-        Iterator<Section> iterator = sections.iterator();
-        while (iterator.hasNext()) {
-            Section section = iterator.next();
+        for (Section section : sections) {
             if (section.getName().equals(sectionName)) {
                 return section.getId();
             }
@@ -116,10 +108,8 @@ public class ExistingTestCases {
     }
 
     public String[] listTestCases() throws ElementNotFoundException {
-        ArrayList<String> result = new ArrayList<String>();
-        Iterator<Case> caseIterator = cases.iterator();
-        while (caseIterator.hasNext()) {
-            Case testcase = caseIterator.next();
+        ArrayList<String> result = new ArrayList<>();
+        for (Case testcase : cases) {
             String sectionName = getSectionName(testcase.getSectionId());
             result.add(sectionName + ": " + testcase.getTitle());
         }

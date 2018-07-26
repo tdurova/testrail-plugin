@@ -29,7 +29,7 @@ public class Results {
     private List<Result> results;
 
     public Results() {
-        this.results = new ArrayList<Result>();
+        this.results = new ArrayList<>();
     }
 
     public void setResults(ArrayList<Result> results) { this.results = results; }

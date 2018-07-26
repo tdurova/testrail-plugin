@@ -50,7 +50,7 @@ public class JUnitResults {
     }
 
     public void slurpTestResults(String fileMatchers) throws IOException, JAXBException, InterruptedException {
-        Suites = new ArrayList<Testsuite>();
+        Suites = new ArrayList<>();
         JAXBContext jaxbSuiteContext = JAXBContext.newInstance(Testsuite.class);
         JAXBContext jaxbSuitesContext = JAXBContext.newInstance(Testsuites.class);
         final Unmarshaller jaxbSuiteUnmarshaller = jaxbSuiteContext.createUnmarshaller();

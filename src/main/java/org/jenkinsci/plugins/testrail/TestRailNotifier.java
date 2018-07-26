@@ -153,7 +153,7 @@ public class TestRailNotifier extends Notifier {
         testrail.setUser(getDescriptor().getTestrailUser());
         testrail.setPassword(getDescriptor().getTestrailPassword());
 
-        ExistingTestCases testCases = null;
+        ExistingTestCases testCases;
         try {
             testCases = new ExistingTestCases(testrail, this.testrailProject, this.testrailSuite);
         } catch (ElementNotFoundException e) {
@@ -162,7 +162,7 @@ public class TestRailNotifier extends Notifier {
             return false;
         }
 
-        String[] caseNames = null;
+        String[] caseNames;
         try {
             caseNames = testCases.listTestCases();
             listener.getLogger().println("Test Cases: ");

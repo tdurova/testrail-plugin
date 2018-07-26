@@ -129,7 +129,7 @@ public class TestRailClient {
     }
 
     private TestRailResponse httpPostInt(String path, String payload)
-            throws UnsupportedEncodingException, IOException, HTTPException {
+            throws IOException, HTTPException {
         TestRailResponse result;
         PostMethod post = new PostMethod(host + "/" + path);
         HttpClient httpclient = setUpHttpClient(post);
@@ -198,9 +198,9 @@ public class TestRailClient {
 
     public int getProjectId(String projectName) throws IOException, ElementNotFoundException {
         Project[] projects = getProjects();
-        for(int i = 0; i < projects.length; i++) {
-            if (projects[i].getName().equals(projectName)) {
-                return projects[i].getId();
+        for (Project project : projects) {
+            if (project.getName().equals(projectName)) {
+                return project.getId();
             }
         }
 
