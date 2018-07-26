@@ -1,37 +1,30 @@
 testrail-jenkins-plugin
 =======================
 
-Forked from  https://github.com/achikin/testrail-jenkins-plugin
+Forked from [https://github.com/achikin/testrail-jenkins-plugin](https://github.com/achikin/testrail-jenkins-plugin "https://github.com/achikin/testrail-jenkins-plugin").
+
 Integrate test results from Jenkins into TestRail.
-Upload your junit test results to TestRail after every run.
+Upload your JUnit test results to TestRail after every run.
 The file should follow the [junit schema](https://github.com/windyroad/JUnit-Schema/blob/master/JUnit.xsd)
 Each Jenkins build becomes a test run.
 Each test suite becomes a test group.
 
 Using the Plugin
 -----
-1. This plugin is not yet available through Plugin Manager. It must be installed manually. To do this, Download the plugin and use the command:
-
-```
-mvn package
-```    
-
-This will create the hpi file (found in `/testrail-plugin/target`), which you can then upload to your Jenkins installation.
-1. This plugin is not yet available through Plugin Manager. It must be installed manually. To do this, Download the plugin and use the command 'mvn package'. This will create the hpi file (found in /testrail-plugin/target), which you can then upload to your Jenkins installation.
+1. This plugin is not yet available through the Plugin Manager. It must be installed manually. To do this, Download the plugin and use the command:
+```mvn package```. This will create the hpi file (found in `/testrail-plugin/target`), which you can then upload to your Jenkins installation.
 
 2. Once you install the plugin, you must configure the TestRail user in your Global Settings. 
 ![Global Settings for the TestRail Notifier](global-settings.PNG)
 
-3. Go to the job you wish to use the plugin with and add a Post Build Acion. The option you want is "Send results to TestRail".
+3. Go to the job you wish to use the plugin with and add a Post Build Action. The option you want is "Send results to TestRail".
 
-4. Configure the step. The Project and Test Suite dropdowns are automatically populated using the TestRail API.
-Note you can also optionally define a Milestone that you are testing against. 
-The Test Report XMLs is a comma separated list of XML files in the job workspace containing results to send to TestRail.
+4. Configure the step. The Project and Test Suite dropdowns are automatically populated using the TestRail API. Note you can also optionally define a Milestone that you are testing against. The Test Report XMLs is a comma-separated list of XML files in the job workspace containing results to send to TestRail.
 ![Project Settings for the TestRail Notifier](job-settings.PNG)
 
 Pipeline Support
 -----
-To use this plugin in a pipeline, add the following to your jenkinsfile:
+To use this plugin in a pipeline, add the following to your Jenkinsfile:
 
 ```
 testRail(testrailProject: <Project ID>, testrailSuite: <Suite ID>, 
@@ -75,18 +68,18 @@ This is a Maven project. You'll need the following in your ~/.m2/settings.xml.
       </mirrors>
     </settings>
     
-To run on your development box you can just do
+To run on your development box, you can just do
 
     'mvn hpi:run'
     
 That will build and start a Jenkins instance running at http://localhost:8080/jenkins. It will have the plugin installed but not configured.
 
 
-And to build a package to install on your production Jenkins box
+And to build a package to install on your production Jenkins box.
 
     mvn clean package
         
-That creates a .hpi file in the target directory. For more information about installing plugins, please see https://wiki.jenkins-ci.org/display/JENKINS/Plugins.
+That creates a .hpi file in the target directory. For more information about installing plugins, please see [https://wiki.jenkins-ci.org/display/JENKINS/Plugins](https://wiki.jenkins-ci.org/display/JENKINS/Plugins "https://wiki.jenkins-ci.org/display/JENKINS/Plugins").
 
 
 
