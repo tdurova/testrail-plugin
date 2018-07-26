@@ -38,7 +38,6 @@ import javax.xml.ws.http.HTTPException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.InterruptedException;
-import java.util.List;
 import java.util.Iterator;
 import static org.jenkinsci.plugins.testrail.Utils.*;
 /**
@@ -343,8 +342,8 @@ public class TestRailClient {
         }
 
         String body = httpPost("index.php?/api/v2/add_case/" + sectionId, payload.toString()).getBody();
-        Case c = createCaseFromJson(new JSONObject(body));
-        return c;
+        Case caseFromJson = createCaseFromJson(new JSONObject(body));
+        return caseFromJson;
     }
 
     public TestRailResponse addResultsForCases(int runId, Results results, String extraParameters) 
@@ -399,19 +398,19 @@ public class TestRailClient {
         return suites;
     }
 
-    public String getMilestoneID(String milesoneName, int projectId) throws IOException, ElementNotFoundException {
-      for (Milestone mstone: getMilestones(projectId)) {
-         if (mstone.getName().equals(milesoneName)) {
-             return mstone.getId();
+    public String getMilestoneID(String milestoneName, int projectId) throws IOException, ElementNotFoundException {
+      for (Milestone milestone: getMilestones(projectId)) {
+         if (milestone.getName().equals(milestoneName)) {
+             return milestone.getId();
          }
       }
       throw new ElementNotFoundException("Milestone id not found.");
     }
 
     public String getMilestoneName(String milestoneId, int projectId) throws IOException, ElementNotFoundException {
-      for (Milestone mstone: getMilestones(projectId)) {
-        if (mstone.getId() == milestoneId) {
-          return mstone.getName();
+      for (Milestone milestone: getMilestones(projectId)) {
+        if (milestone.getId() == milestoneId) {
+          return milestone.getName();
         }
       }
       throw new ElementNotFoundException("Milestone " + milestoneId + " not found in Project " + projectId);
