@@ -25,22 +25,27 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
 import hudson.tasks.*;
 import hudson.util.FormValidation;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.testrail.JunitResults.*;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.jenkinsci.plugins.testrail.TestRailObjects.*;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.List;
 
-public class TestRailNotifier extends Notifier {
+public class TestRailNotifier extends Notifier implements SimpleBuildStep {
 
     private int testrailProject;
     private int testrailSuite;
@@ -71,16 +76,22 @@ public class TestRailNotifier extends Notifier {
         this.createNewTestcases = createNewTestcases;
     }
 
+    @DataBoundSetter
     public void setTestrailProject(int project) { this.testrailProject = project;}
     public int getTestrailProject() { return this.testrailProject; }
+    @DataBoundSetter
     public void setTestrailSuite(int suite) { this.testrailSuite = suite; }
     public int getTestrailSuite() { return this.testrailSuite; }
+    @DataBoundSetter
     public void setJunitResultsGlob(String glob) { this.junitResultsGlob = glob; }
     public String getJunitResultsGlob() { return this.junitResultsGlob; }
     public String getTestrailMilestone() { return this.testrailMilestone; }
+    @DataBoundSetter
     public void setTestrailMilestone(String milestone) { this.testrailMilestone = milestone; }
+    @DataBoundSetter
     public void setEnableMilestone(boolean mstone) {this.enableMilestone = mstone; }
     public boolean getEnableMilestone() { return  this.enableMilestone; }
+    @DataBoundSetter
     public void setExtraParams(String params) { this.extraParameters = params; }
     public String getExtraParams() { return this.extraParameters; }
     public void setUseExistingRun(boolean newrun) { this.useExistingRun = newrun; }
@@ -90,8 +101,9 @@ public class TestRailNotifier extends Notifier {
     public void setCreateNewTestcases(boolean newcases) {this.createNewTestcases = newcases; }
     public boolean getCreateNewTestcases() { return  this.createNewTestcases; }
 
+
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
+    public void perform(@Nonnull hudson.model.Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         TestRailClient  testrail = getDescriptor().getTestrailInstance();
         testrail.setHost(getDescriptor().getTestrailHost());
         testrail.setUser(getDescriptor().getTestrailUser());
@@ -101,23 +113,23 @@ public class TestRailNotifier extends Notifier {
         try {
             testCases = new ExistingTestCases(testrail, this.testrailProject, this.testrailSuite);
         } catch (ElementNotFoundException e) {
-            listener.getLogger().println("Cannot find project or suite on TestRail server. Please check your Jenkins job and system configurations.");
-            return false;
+            taskListener.getLogger().println("Cannot find project or suite on TestRail server. Please check your Jenkins job and system configurations.");
+            run.setResult(hudson.model.Result.FAILURE);
         }
 
         String[] caseNames = null;
         try {
             caseNames = testCases.listTestCases();
-            listener.getLogger().println("Test Cases: ");
+            taskListener.getLogger().println("Test Cases: ");
             for (int i = 0; i < caseNames.length; i++) {
-                listener.getLogger().println("  " + caseNames[i]);
+                taskListener.getLogger().println("  " + caseNames[i]);
             }
         } catch (ElementNotFoundException e) {
-            listener.getLogger().println("Failed to list test cases");
-            listener.getLogger().println("Element not found:" + e.getMessage());
+            taskListener.getLogger().println("Failed to list test cases");
+            taskListener.getLogger().println("Element not found:" + e.getMessage());
         }
 
-        listener.getLogger().println("Munging test result files.");
+        taskListener.getLogger().println("Munging test result files.");
         Results results = new Results();
 
         // FilePath doesn't have a read method. We want to actually process the files on the master
@@ -130,19 +142,18 @@ public class TestRailNotifier extends Notifier {
         // it looks like the destructor deletes the temp dir when we're finished
         FilePath tempdir = new FilePath(Util.createTempDir());
         // This picks up *all* result files so if you have old results in the same directory we'll see those, too.
-        FilePath ws = build.getWorkspace();
         try {
-            ws.copyRecursiveTo(junitResultsGlob, "", tempdir);
+            workspace.copyRecursiveTo(junitResultsGlob, "", tempdir);
         } catch (Exception e) {
-            listener.getLogger().println("Error trying to copy files to Jenkins master: " + e.getMessage());
-            return false;
+            taskListener.getLogger().println("Error trying to copy files to Jenkins master: " + e.getMessage());
+            run.setResult(hudson.model.Result.FAILURE);
         }
         JUnitResults actualJunitResults = null;
         try {
-            actualJunitResults = new JUnitResults(tempdir, this.junitResultsGlob, listener.getLogger());
+            actualJunitResults = new JUnitResults(tempdir, this.junitResultsGlob, taskListener.getLogger());
         } catch (JAXBException e) {
-            listener.getLogger().println(e.getMessage());
-            return false;
+            taskListener.getLogger().println(e.getMessage());
+            run.setResult(hudson.model.Result.FAILURE);
         }
         List<Testsuite> suites = actualJunitResults.getSuites();
         try {
@@ -150,13 +161,18 @@ public class TestRailNotifier extends Notifier {
                 results.merge(addSuite(suite, null, testCases));
             }
         } catch (Exception e) {
-            listener.getLogger().println("Failed to create missing Test Suites in TestRail.");
-            listener.getLogger().println("EXCEPTION: " + e.getMessage());
+            taskListener.getLogger().println("Failed to create missing Test Suites in TestRail.");
+            taskListener.getLogger().println("EXCEPTION: " + e.getMessage());
         }
 
+        taskListener.getLogger().println("Uploading results to TestRail.");
+        String runComment = "Automated results from Jenkins: " + workspace.toURI();
+        String milestoneId = testrailMilestone;
         listener.getLogger().println("Uploading results to TestRail.");
         String runComment = "Automated results from Jenkins: " + build.getUrl().toString();
 
+        int runId = -1;
+        TestRailResponse response = null;
         int runId = Integer.parseInt(testRun);
         TestRailResponse response;
         try {
@@ -165,29 +181,27 @@ public class TestRailNotifier extends Notifier {
             }
             response = testrail.addResultsForCases(runId, results, this.extraParameters);
         } catch (TestRailException e) {
-            listener.getLogger().println("Error pushing results to TestRail");
-            listener.getLogger().println(e.getMessage());
-            return false;
+            taskListener.getLogger().println("Error pushing results to TestRail");
+            taskListener.getLogger().println(e.getMessage());
+            run.setResult(hudson.model.Result.FAILURE);
         }
 
         boolean buildResult = (200 == response.getStatus());
         if (buildResult) {
-            listener.getLogger().println("Successfully uploaded test results.");
+            taskListener.getLogger().println("Successfully uploaded test results.");
         } else {
-            listener.getLogger().println("Failed to add results to TestRail.");
-            listener.getLogger().println("status: " + response.getStatus());
-            listener.getLogger().println("body :\n" + response.getBody());
+            taskListener.getLogger().println("Failed to add results to TestRail.");
+            taskListener.getLogger().println("status: " + response.getStatus());
+            taskListener.getLogger().println("body :\n" + response.getBody());
         }
         try {
             if (!this.useExistingRun) {
                 testrail.closeRun(runId);
             }
         } catch (Exception e) {
-            listener.getLogger().println("Failed to close test run in TestRail.");
-            listener.getLogger().println("EXCEPTION: " + e.getMessage());
+            taskListener.getLogger().println("Failed to close test run in TestRail.");
+            taskListener.getLogger().println("EXCEPTION: " + e.getMessage());
         }
-
-        return buildResult;
     }
 
     public Results addSuite(Testsuite suite, String parentId, ExistingTestCases existingCases) throws IOException, TestRailException {
@@ -267,6 +281,7 @@ public class TestRailNotifier extends Notifier {
         return BuildStepMonitor.NONE; //null;
     }
 
+    @Symbol("testRail")
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private String testrailHost = "";
@@ -416,7 +431,7 @@ public class TestRailNotifier extends Notifier {
             testrail.setHost(getTestrailHost());
             testrail.setUser(getTestrailUser());
             testrail.setPassword(getTestrailPassword());
-            
+
             items.add("None", "");
             try {
                 for (Milestone mstone : testrail.getMilestones(testrailProject)) {
@@ -433,7 +448,7 @@ public class TestRailNotifier extends Notifier {
             testrail.setHost(getTestrailHost());
             testrail.setUser(getTestrailUser());
             testrail.setPassword(getTestrailPassword());
-            
+
             try {
                 for (Run run : testrail.getRuns(testrailProject)) {
                     items.add(run.getName(), run.getId());
