@@ -112,7 +112,7 @@ public class ExistingTestCases {
             String sectionName = getSectionName(testcase.getSectionId());
             result.add(sectionName + ": " + testcase.getTitle());
         }
-        return result.toArray(new String[result.size()]);
+        return result.toArray(new String[0]);
     }
 }
 

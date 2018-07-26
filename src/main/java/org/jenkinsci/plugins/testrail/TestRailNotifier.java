@@ -195,7 +195,7 @@ public class TestRailNotifier extends Notifier {
             listener.getLogger().println("Error trying to copy files to Jenkins master: " + e.getMessage());
             return false;
         }
-        JUnitResults actualJunitResults = null;
+        JUnitResults actualJunitResults;
         try {
             actualJunitResults = new JUnitResults(tempDir, this.junitResultsGlob, listener.getLogger());
         } catch (JAXBException e) {
@@ -389,7 +389,7 @@ public class TestRailNotifier extends Notifier {
             testrail.setPassword(getTestrailPassword());
 
             if (getTestrailHost().isEmpty() || getTestrailUser().isEmpty() || getTestrailPassword().isEmpty()
-                    || !testrail.serverReachable() || !testrail.authenticationWorks()) {
+                    || !testrail.serverReachable() || testrail.authenticationWorks()) {
                 return FormValidation.warning("Please fix your TestRail configuration in Manage Jenkins -> Configure System.");
             }
 
@@ -436,7 +436,7 @@ public class TestRailNotifier extends Notifier {
                 testrail.setUser(value);
                 testrail.setPassword(testrailPassword);
                 testrail.setUser(testrailUser);
-                if (testrail.serverReachable() && !testrail.authenticationWorks()) {
+                if (testrail.serverReachable() && testrail.authenticationWorks()) {
                     return FormValidation.error("Invalid user/password combination.");
                 }
             }

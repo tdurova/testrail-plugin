@@ -36,7 +36,6 @@ import org.json.JSONObject;
 
 import javax.xml.ws.http.HTTPException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.InterruptedException;
 import java.util.Iterator;
 import static org.jenkinsci.plugins.testrail.Utils.*;
@@ -107,7 +106,7 @@ public class TestRailClient {
     }
 
     private TestRailResponse httpPost(String path, String payload)
-        throws UnsupportedEncodingException, IOException, HTTPException, TestRailException {
+        throws IOException, HTTPException, TestRailException {
         TestRailResponse response;
 
         do {
@@ -342,8 +341,7 @@ public class TestRailClient {
         }
 
         String body = httpPost("index.php?/api/v2/add_case/" + sectionId, payload.toString()).getBody();
-        Case caseFromJson = createCaseFromJson(new JSONObject(body));
-        return caseFromJson;
+        return createCaseFromJson(new JSONObject(body));
     }
 
     public TestRailResponse addResultsForCases(int runId, Results results, String extraParameters) 
@@ -356,9 +354,9 @@ public class TestRailClient {
 
             if (extraParameters.length() > 0) {
                 JSONObject xp = new JSONObject(extraParameters);
-                Iterator<String> keys = xp.keys();
+                Iterator keys = xp.keys();
                 while (keys.hasNext()) {
-                    String k = keys.next();
+                    String k = (String) keys.next();
                     o.put(k, xp.get(k).toString());
                 }
             }
@@ -368,8 +366,7 @@ public class TestRailClient {
 
         String payload = new JSONObject().put("results", a).toString();
         log(payload);
-        TestRailResponse response = httpPost("index.php?/api/v2/add_results_for_cases/" + runId, payload);
-        return response;
+        return httpPost("index.php?/api/v2/add_results_for_cases/" + runId, payload);
     }
 
     public int addRun(int projectId, int suiteId, String milestoneID, String description)

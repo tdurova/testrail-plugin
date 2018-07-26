@@ -69,9 +69,7 @@ public class JUnitResults {
                         try {
                             Testsuites suites = (Testsuites) jaxbSuitesUnmarshaller.unmarshal(file);
                             if (suites.hasSuites()) {
-                                for (Testsuite suite : suites.getSuites()) {
-                                    Suites.add(suite);
-                                }
+                                Suites.addAll(suites.getSuites());
                             }
                         } catch (ClassCastException e) {
                             try {
