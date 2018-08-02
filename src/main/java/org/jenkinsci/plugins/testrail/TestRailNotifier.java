@@ -1,20 +1,20 @@
-/**
- *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
  */
 package org.jenkinsci.plugins.testrail;
 
@@ -102,10 +102,14 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
 
         String[] caseNames = null;
         try {
-            caseNames = testCases.listTestCases();
+            if (testCases != null) {
+                caseNames = testCases.listTestCases();
+            }
             taskListener.getLogger().println("Test Cases: ");
-            for (int i = 0; i < caseNames.length; i++) {
-                taskListener.getLogger().println("  " + caseNames[i]);
+            if (caseNames != null) {
+                for (String caseName : caseNames) {
+                    taskListener.getLogger().println("  " + caseName);
+                }
             }
         } catch (ElementNotFoundException e) {
             taskListener.getLogger().println("Failed to list test cases");
@@ -138,7 +142,10 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
             taskListener.getLogger().println(e.getMessage());
             run.setResult(hudson.model.Result.FAILURE);
         }
-        List<Testsuite> suites = actualJunitResults.getSuites();
+        List<Testsuite> suites = null;
+        if (actualJunitResults != null) {
+            suites = actualJunitResults.getSuites();
+        }
         try {
             for (Testsuite suite: suites) {
                 results.merge(addSuite(suite, null, testCases));
@@ -155,7 +162,9 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
         int runId = -1;
         TestRailResponse response = null;
         try {
-            runId = testrail.addRun(testCases.getProjectId(), testCases.getSuiteId(), milestoneId, runComment);
+            if (testCases != null) {
+                runId = testrail.addRun(testCases.getProjectId(), testCases.getSuiteId(), milestoneId, runComment);
+            }
             response = testrail.addResultsForCases(runId, results);
         } catch (TestRailException e) {
             taskListener.getLogger().println("Error pushing results to TestRail");
@@ -163,13 +172,20 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
             run.setResult(hudson.model.Result.FAILURE);
         }
 
-        boolean buildResult = (200 == response.getStatus());
+        boolean buildResult = false;
+        if (response != null) {
+            buildResult = (200 == response.getStatus());
+        }
         if (buildResult) {
             taskListener.getLogger().println("Successfully uploaded test results.");
         } else {
             taskListener.getLogger().println("Failed to add results to TestRail.");
-            taskListener.getLogger().println("status: " + response.getStatus());
-            taskListener.getLogger().println("body :\n" + response.getBody());
+            if (response != null) {
+                taskListener.getLogger().println("status: " + response.getStatus());
+            }
+            if (response != null) {
+                taskListener.getLogger().println("body :\n" + response.getBody());
+            }
         }
         try {
             testrail.closeRun(runId);
@@ -289,8 +305,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
                 for (Project prj : testrail.getProjects()) {
                     items.add(prj.getName(), prj.getStringId());
                 }
-            } catch (ElementNotFoundException e) {
-            } catch (IOException e) {
+            } catch (ElementNotFoundException | IOException ignored) {
             }
 
             return items;
@@ -306,8 +321,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
                 for (Suite suite : testrail.getSuites(testrailProject)) {
                     items.add(suite.getName(), suite.getStringId());
                 }
-            } catch (ElementNotFoundException e) {
-            } catch (IOException e) {
+            } catch (ElementNotFoundException | IOException ignored) {
             }
 
             return items;
@@ -395,8 +409,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
                 for (Milestone mstone : testrail.getMilestones(testrailProject)) {
                     items.add(mstone.getName(), mstone.getId());
                 }
-            } catch (ElementNotFoundException e) {
-            } catch (IOException e) {
+            } catch (ElementNotFoundException | IOException ignored) {
             }
             return items;
         }
