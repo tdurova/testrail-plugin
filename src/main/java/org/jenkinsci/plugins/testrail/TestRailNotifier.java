@@ -44,6 +44,7 @@ import javax.servlet.ServletException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class TestRailNotifier extends Notifier implements SimpleBuildStep {
 
@@ -66,28 +67,63 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setTestrailProject(int project) { this.testrailProject = project;}
-    public int getTestrailProject() { return this.testrailProject; }
+    public void setTestrailProject(int project) {
+        this.testrailProject = project;
+    }
+
+    public int getTestrailProject() {
+        return this.testrailProject;
+    }
+
     @DataBoundSetter
-    public void setTestrailSuite(int suite) { this.testrailSuite = suite; }
-    public int getTestrailSuite() { return this.testrailSuite; }
+    public void setTestrailSuite(int suite) {
+        this.testrailSuite = suite;
+    }
+
+    public int getTestrailSuite() {
+        return this.testrailSuite;
+    }
+
     @DataBoundSetter
-    public void setJunitResultsGlob(String glob) { this.junitResultsGlob = glob; }
-    public String getJunitResultsGlob() { return this.junitResultsGlob; }
-    public String getTestrailMilestone() { return this.testrailMilestone; }
+    public void setJunitResultsGlob(String glob) {
+        this.junitResultsGlob = glob;
+    }
+
+    public String getJunitResultsGlob() {
+        return this.junitResultsGlob;
+    }
+
+    public String getTestrailMilestone() {
+        return this.testrailMilestone;
+    }
+
     @DataBoundSetter
-    public void setTestrailMilestone(String milestone) { this.testrailMilestone = milestone; }
+    public void setTestrailMilestone(String milestone) {
+        this.testrailMilestone = milestone;
+    }
+
     @DataBoundSetter
-    public void setEnableMilestone(boolean mstone) {this.enableMilestone = mstone; }
-    public boolean getEnableMilestone() { return  this.enableMilestone; }
+    public void setEnableMilestone(boolean mstone) {
+        this.enableMilestone = mstone;
+    }
+
+    public boolean getEnableMilestone() {
+        return this.enableMilestone;
+    }
+
     @DataBoundSetter
-    public void setCreateNewTestcases(boolean newcases) {this.createNewTestcases = newcases; }
-    public boolean getCreateNewTestcases() { return  this.createNewTestcases; }
+    public void setCreateNewTestcases(boolean newcases) {
+        this.createNewTestcases = newcases;
+    }
+
+    public boolean getCreateNewTestcases() {
+        return this.createNewTestcases;
+    }
 
 
     @Override
     public void perform(@Nonnull hudson.model.Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
-        TestRailClient  testrail = getDescriptor().getTestrailInstance();
+        TestRailClient testrail = getDescriptor().getTestrailInstance();
         testrail.setHost(getDescriptor().getTestrailHost());
         testrail.setUser(getDescriptor().getTestrailUser());
         testrail.setPassword(getDescriptor().getTestrailPassword());
@@ -100,16 +136,12 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
             run.setResult(hudson.model.Result.FAILURE);
         }
 
-        String[] caseNames = null;
+        String[] caseNames;
         try {
-            if (testCases != null) {
-                caseNames = testCases.listTestCases();
-            }
+            caseNames = Objects.requireNonNull(testCases).listTestCases();
             taskListener.getLogger().println("Test Cases: ");
-            if (caseNames != null) {
-                for (String caseName : caseNames) {
-                    taskListener.getLogger().println("  " + caseName);
-                }
+            for (String caseName : caseNames) {
+                taskListener.getLogger().println("  " + caseName);
             }
         } catch (ElementNotFoundException e) {
             taskListener.getLogger().println("Failed to list test cases");
@@ -142,12 +174,9 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
             taskListener.getLogger().println(e.getMessage());
             run.setResult(hudson.model.Result.FAILURE);
         }
-        List<Testsuite> suites = null;
-        if (actualJunitResults != null) {
-            suites = actualJunitResults.getSuites();
-        }
+        List<Testsuite> suites = Objects.requireNonNull(actualJunitResults).getSuites();
         try {
-            for (Testsuite suite: suites) {
+            for (Testsuite suite : suites) {
                 results.merge(addSuite(suite, null, testCases));
             }
         } catch (Exception e) {
@@ -162,9 +191,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
         int runId = -1;
         TestRailResponse response = null;
         try {
-            if (testCases != null) {
-                runId = testrail.addRun(testCases.getProjectId(), testCases.getSuiteId(), milestoneId, runComment);
-            }
+            runId = testrail.addRun(Objects.requireNonNull(testCases).getProjectId(), testCases.getSuiteId(), milestoneId, runComment);
             response = testrail.addResultsForCases(runId, results);
         } catch (TestRailException e) {
             taskListener.getLogger().println("Error pushing results to TestRail");
@@ -172,20 +199,13 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
             run.setResult(hudson.model.Result.FAILURE);
         }
 
-        boolean buildResult = false;
-        if (response != null) {
-            buildResult = (200 == response.getStatus());
-        }
+        boolean buildResult = (200 == Objects.requireNonNull(response).getStatus());
         if (buildResult) {
             taskListener.getLogger().println("Successfully uploaded test results.");
         } else {
             taskListener.getLogger().println("Failed to add results to TestRail.");
-            if (response != null) {
-                taskListener.getLogger().println("status: " + response.getStatus());
-            }
-            if (response != null) {
-                taskListener.getLogger().println("body :\n" + response.getBody());
-            }
+            taskListener.getLogger().println("status: " + response.getStatus());
+            taskListener.getLogger().println("body :\n" + response.getBody());
         }
         try {
             testrail.closeRun(runId);
@@ -233,23 +253,23 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
                     }
                 }
                 if (addResult) {
-	                CaseStatus caseStatus;
-	                Float caseTime = testcase.getTime();
-	                String caseComment = null;
-	                Failure caseFailure = testcase.getFailure();
-	                if (caseFailure != null) {
-	                    caseStatus = CaseStatus.FAILED;
-	                    caseComment = (caseFailure.getMessage() == null) ? caseFailure.getText() : caseFailure.getMessage() + "\n" + caseFailure.getText();
-	                } else if (testcase.getSkipped() != null) {
-	                    caseStatus = CaseStatus.UNTESTED;
-	                } else {
-	                    caseStatus = CaseStatus.PASSED;
-	                }
+                    CaseStatus caseStatus;
+                    Float caseTime = testcase.getTime();
+                    String caseComment = null;
+                    Failure caseFailure = testcase.getFailure();
+                    if (caseFailure != null) {
+                        caseStatus = CaseStatus.FAILED;
+                        caseComment = (caseFailure.getMessage() == null) ? caseFailure.getText() : caseFailure.getMessage() + "\n" + caseFailure.getText();
+                    } else if (testcase.getSkipped() != null) {
+                        caseStatus = CaseStatus.UNTESTED;
+                    } else {
+                        caseStatus = CaseStatus.PASSED;
+                    }
 
-	                if (caseStatus != CaseStatus.UNTESTED){
-	                    results.addResult(new Result(caseId, caseStatus, caseComment, caseTime));
-	                }
-	            }
+                    if (caseStatus != CaseStatus.UNTESTED) {
+                        results.addResult(new Result(caseId, caseStatus, caseComment, caseTime));
+                    }
+                }
             }
         }
 
@@ -261,7 +281,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
     // you don't have to do this.
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -286,10 +306,15 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
 
         public FormValidation doCheckTestrailProject(@QueryParameter int value)
                 throws IOException, ServletException {
+            return getFormValidation();
+        }
+
+        private FormValidation getFormValidation() throws IOException {
             testrail.setHost(getTestrailHost());
             testrail.setUser(getTestrailUser());
             testrail.setPassword(getTestrailPassword());
-            if (getTestrailHost().isEmpty() || getTestrailUser().isEmpty() || getTestrailPassword().isEmpty() || !testrail.serverReachable() || !testrail.authenticationWorks()) {
+            if (getTestrailHost().isEmpty() || getTestrailUser().isEmpty() || getTestrailPassword().isEmpty() ||
+                    !testrail.serverReachable() || !testrail.authenticationWorks()) {
                 return FormValidation.warning("Please fix your TestRail configuration in Manage Jenkins -> Configure System.");
             }
             return FormValidation.ok();
@@ -329,15 +354,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
 
         public FormValidation doCheckTestrailSuite(@QueryParameter String value)
                 throws IOException, ServletException {
-            testrail.setHost(getTestrailHost());
-            testrail.setUser(getTestrailUser());
-            testrail.setPassword(getTestrailPassword());
-
-            if (getTestrailHost().isEmpty() || getTestrailUser().isEmpty() || getTestrailPassword().isEmpty() || !testrail.serverReachable() || !testrail.authenticationWorks()) {
-                return FormValidation.warning("Please fix your TestRail configuration in Manage Jenkins -> Configure System.");
-            }
-
-            return FormValidation.ok();
+            return getFormValidation();
         }
 
         public FormValidation doCheckJunitResultsGlob(@QueryParameter String value)
@@ -377,7 +394,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
                 testrail.setHost(testrailHost);
                 testrail.setUser(value);
                 testrail.setPassword(testrailPassword);
-                if (testrail.serverReachable() && !testrail.authenticationWorks()){
+                if (testrail.serverReachable() && !testrail.authenticationWorks()) {
                     return FormValidation.error("Invalid user/password combination.");
                 }
             }
@@ -395,7 +412,7 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
                 testrail.setHost(testrailHost);
                 testrail.setUser(testrailUser);
                 testrail.setPassword(value);
-                if (testrail.serverReachable() && !testrail.authenticationWorks()){
+                if (testrail.serverReachable() && !testrail.authenticationWorks()) {
                     return FormValidation.error("Invalid user/password combination.");
                 }
             }
@@ -438,16 +455,39 @@ public class TestRailNotifier extends Notifier implements SimpleBuildStep {
             // ^Can also use req.bindJSON(this, formData);
             //  (easier when there are many fields; need set* methods for this, like setTestrailHost)
             save();
-            return super.configure(req,formData);
+            return super.configure(req, formData);
         }
 
-        public void setTestrailHost(String host) { this.testrailHost = host; }
-        public String getTestrailHost() { return testrailHost; }
-        public void setTestrailUser(String user) { this.testrailUser = user; }
-        public String getTestrailUser() { return testrailUser; }
-        public void setTestrailPassword(String password) { this.testrailPassword = password; }
-        public String getTestrailPassword() { return testrailPassword; }
-        public void setTestrailInstance(TestRailClient trc) { testrail = trc; }
-        public TestRailClient getTestrailInstance() { return testrail; }
+        public void setTestrailHost(String host) {
+            this.testrailHost = host;
+        }
+
+        public String getTestrailHost() {
+            return testrailHost;
+        }
+
+        public void setTestrailUser(String user) {
+            this.testrailUser = user;
+        }
+
+        public String getTestrailUser() {
+            return testrailUser;
+        }
+
+        public void setTestrailPassword(String password) {
+            this.testrailPassword = password;
+        }
+
+        public String getTestrailPassword() {
+            return testrailPassword;
+        }
+
+        public void setTestrailInstance(TestRailClient trc) {
+            testrail = trc;
+        }
+
+        public TestRailClient getTestrailInstance() {
+            return testrail;
+        }
     }
 }
