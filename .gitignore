@@ -17,9 +17,6 @@ out
 .project
 build
 
-# java class files
-*.class
-
 # vim
 *~
 
